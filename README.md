@@ -15,4 +15,5 @@ Find the mines with the help of showing the number of neighboring mines.
 * Click on any revealed field that has - supposedly - all neighboring mines flagged. In that case all neighboring fields not marked as mine will be revealed.
 Beware, if you flagged the incorrect field(s) you will lose.
 * Three pre-defined difficulty level: beginner, advanced, expert
+* Timing you game, only starts on the first click on the field
 * Keeping track of best times per difficulty level and the option to reset them (feature might be platform dependent, works on Windows)
