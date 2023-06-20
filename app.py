@@ -1,31 +1,33 @@
 from PySide6 import QtCore
-from PySide6.QtCore import QTimer
+from PySide6.QtCore import QTimer, QSettings
 
 from PySide6.QtGui import QMouseEvent, QFont
 from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton, QGridLayout, QWidget, QVBoxLayout, \
-    QHBoxLayout, QLCDNumber
+    QHBoxLayout, QLCDNumber, QMessageBox
 
 import random
 
 from event import EventHandler
 
-
 MINE_ICON = '💣'
 FLAG_ICON = '🚩'
 QUESTION_ICON = '❓'
 
+settings = QSettings('minesweeper', 'settings')
+
 
 class GameMode:
 
-    def __init__(self, cols, rows, mines):
+    def __init__(self, name, cols, rows, mines):
+        self.name = name
         self.cols = cols
         self.rows = rows
         self.mines = mines
 
 
-BEGINNER = GameMode(rows=10, cols=10, mines=10)
-ADVANCED = GameMode(rows=20, cols=20, mines=50)
-EXPERT = GameMode(rows=30, cols=30, mines=200)
+BEGINNER = GameMode('beginner', rows=10, cols=10, mines=10)
+ADVANCED = GameMode('advanced', rows=20, cols=20, mines=50)
+EXPERT = GameMode('expert', rows=30, cols=30, mines=200)
 
 
 @EventHandler.register()
@@ -48,7 +50,7 @@ class MineDisplay(QLCDNumber):
         self.display(self.mines)
 
     @EventHandler.capture_event('win')
-    def win(self):
+    def win(self, _):
         self.mines = 0
         self.display(self.mines)
 
@@ -80,16 +82,35 @@ class Timer(QLCDNumber):
     def on_game_end(self):
         self.timer.stop()
 
+    @EventHandler.capture_event('win')
+    def on_win(self, game_mode_name):
+        last_best_time = settings.value(game_mode_name, 999)
+        if self.count < last_best_time:
+            settings.setValue(game_mode_name, self.count)
+
+
+class BestTimes(QMessageBox):
+
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Best times")
+        self.setText(f"""
+        Beginner: {settings.value('beginner', 999)} seconds
+        Advanced: {settings.value('advanced', 999)} seconds
+        Expert:   {settings.value('expert', 999)}   seconds
+        """)
+
 
 @EventHandler.register()
 class Game(QWidget):
 
-    def __init__(self, cols=10, rows=10, mines=10):
+    def __init__(self, game_mode: GameMode):
         super().__init__()
-        assert 0 < mines < cols * rows
-        self.rows = rows
-        self.cols = cols
-        self.mines = mines
+        assert 0 < game_mode.mines < game_mode.cols * game_mode.rows
+        self.rows = game_mode.rows
+        self.cols = game_mode.cols
+        self.mines = game_mode.mines
+        self.game_mode = game_mode
         self.mine_display = MineDisplay(self.mines)
         self.is_game_started = False
         self.is_game_ended = False
@@ -162,10 +183,10 @@ class Game(QWidget):
         for i in self.buttons.values():
             if not (i.is_revealed or i.is_mine()):
                 return
-        self.emit_event('win')
+        self.emit_event('win', self.game_mode.name)
 
     @EventHandler.capture_event('win')
-    def on_win(self):
+    def on_win(self, _):
         self.game_button.setText('😎')
         for i in self.buttons.values():
             if i.is_mine():
@@ -294,19 +315,75 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.app = app
         self.setWindowTitle("Minesweeper")
-        menu = self.menuBar()
-        file_menu = menu.addMenu("File")
-        beginner_action = file_menu.addAction("Beginner")
-        beginner_action.triggered.connect(lambda _: self.emit_event('new_game', BEGINNER))
-        advanced_action = file_menu.addAction("Advanced")
-        advanced_action.triggered.connect(lambda _: self.emit_event('new_game', ADVANCED))
-        expert_action = file_menu.addAction("Expert")
-        expert_action.triggered.connect(lambda _: self.emit_event('new_game', EXPERT))
-        quit_action = file_menu.addAction("Quit")
-        quit_action.triggered.connect(lambda _: self.app.quit())
+        self.setup_menu()
         self.last_game_mode = BEGINNER
         self.last_game = None
         self.new_game()
+
+    def setup_menu(self):
+        menu = self.menuBar()
+        file_menu = menu.addMenu("File")
+        new_game_action = file_menu.addAction("New Game")
+        file_menu.addSeparator()
+        beginner_action = file_menu.addAction("Beginner")
+        beginner_action.setCheckable(True)
+        beginner_action.setChecked(True)
+
+        def beginner_trigger():
+            game_mode_checked_trigger(beginner_action)
+            self.emit_event('new_game', BEGINNER)
+
+        beginner_action.triggered.connect(beginner_trigger)
+        advanced_action = file_menu.addAction("Advanced")
+        advanced_action.setCheckable(True)
+
+        def advanced_trigger():
+            game_mode_checked_trigger(advanced_action)
+            self.emit_event('new_game', ADVANCED)
+
+        advanced_action.triggered.connect(advanced_trigger)
+        expert_action = file_menu.addAction("Expert")
+        expert_action.setCheckable(True)
+
+        def expert_trigger():
+            game_mode_checked_trigger(expert_action)
+            self.emit_event('new_game', EXPERT)
+
+        expert_action.triggered.connect(expert_trigger)
+        file_menu.addSeparator()
+        quit_action = file_menu.addAction("Quit")
+        quit_action.triggered.connect(lambda _: self.app.quit())
+
+        info_menu = menu.addMenu("Best times")
+        best_times_action = info_menu.addAction("Show")
+        best_times_action.triggered.connect(MainWindow.show_best_times)
+
+        best_times_reset_action = info_menu.addAction("Reset")
+        best_times_reset_action.triggered.connect(MainWindow.reset_best_times)
+
+        def new_game_trigger():
+            [i for i in [beginner_action, advanced_action, expert_action] if i.isChecked()][0].trigger()
+
+        new_game_action.triggered.connect(new_game_trigger)
+
+        def game_mode_checked_trigger(action):
+            action.setChecked(True)
+            if beginner_action != action:
+                beginner_action.setChecked(False)
+            if advanced_action != action:
+                advanced_action.setChecked(False)
+            if expert_action != action:
+                expert_action.setChecked(False)
+
+    @staticmethod
+    def show_best_times():
+        BestTimes().exec()
+
+    @staticmethod
+    def reset_best_times():
+        settings.remove(BEGINNER.name)
+        settings.remove(ADVANCED.name)
+        settings.remove(EXPERT.name)
 
     @EventHandler.capture_event('new_game')
     def new_game(self, game_mode: GameMode = None):
@@ -319,7 +396,7 @@ class MainWindow(QMainWindow):
             self.last_game.unregister()
             self.last_game.destroy()
 
-        self.last_game = Game(self.last_game_mode.rows, self.last_game_mode.cols, self.last_game_mode.mines)
+        self.last_game = Game(self.last_game_mode)
         if self.centralWidget():
             self.centralWidget().destroy()
         self.setCentralWidget(
