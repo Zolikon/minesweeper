@@ -20,8 +20,9 @@ class EventHandler:
                         for i in cls.registered:
                             if hasattr(i, 'receive_event'):
                                 i.receive_event(event, *args, **kwargs)
-                    except:
-                        pass
+                    except RuntimeError as error:
+                        if 'Internal C++ object' not in error.__str__():
+                            raise error
 
                 def receive_event(self, event, *args, **kwargs):
                     try:
@@ -29,8 +30,9 @@ class EventHandler:
                             for i in cls.handlers[event]:
                                 if hasattr(self, i):
                                     getattr(self, i)(*args, **kwargs)
-                    except:
-                        pass
+                    except RuntimeError as error:
+                        if 'Internal C++ object' not in error.__str__():
+                            raise error
 
                 def unregister(self):
                     if self in cls.registered:
