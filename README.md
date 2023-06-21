@@ -17,3 +17,22 @@ Beware, if you flagged the incorrect field(s) you will lose.
 * Three pre-defined difficulty level: beginner, advanced, expert
 * Timing you game, only starts on the first click on the field
 * Keeping track of best times per difficulty level and the option to reset them (feature might be platform dependent, works on Windows)
+
+### Building an exe file to run
+
+Since this a python app it is not that convenient to run it and enjoy the play. So:
+
+`pip3 install PyInstaller`  
+
+or if you need update  
+
+`pip3 install --upgrade PyInstaller pyinstaller-hooks-contrib`
+
+
+then:
+
+` pyinstaller --name Minesweeper --onefile --windowed --icon=minesweeper.ico  main.py`
+
+This will create a single exe file in the dist folder
+
+_Note:_ this is not exactly native code, startup will be slow (~3-4 seconds) but after that it works fine
