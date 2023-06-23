@@ -1,7 +1,8 @@
 from PySide6.QtCore import QSettings
 
 from PySide6.QtGui import QFont
-from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton, QGridLayout, QWidget, QVBoxLayout, \
+from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton, QGridLayout, QWidget, \
+    QVBoxLayout, \
     QHBoxLayout
 
 import random
@@ -10,6 +11,7 @@ from components import MineDisplay, Timer, BestTimes, PlayButton, About
 
 settings = QSettings('minesweeper', 'settings')
 version = 1.0
+
 
 class GameMode:
 
@@ -23,7 +25,6 @@ class GameMode:
 BEGINNER = GameMode('beginner', rows=10, cols=10, mines=10)
 ADVANCED = GameMode('advanced', rows=20, cols=20, mines=50)
 EXPERT = GameMode('expert', rows=16, cols=30, mines=99)
-
 
 
 class Game(QWidget):
@@ -123,7 +124,8 @@ class Game(QWidget):
         if self.buttons[(r, c)].is_mine():
             self.on_game_over(r, c)
             return
-        if self.buttons[(r, c)].is_revealed or self.buttons[(r, c)].flag == PlayButton.FLAGGED_AS_MINE:
+        if self.buttons[(r, c)].is_revealed or \
+                self.buttons[(r, c)].flag == PlayButton.FLAGGED_AS_MINE:
             return
         value = self.buttons[(r, c)].reveal()
         if value == 0:
@@ -157,7 +159,8 @@ class Game(QWidget):
 
     def on_reveal_neighbors_for_revealed(self, r, c):
         number_of_neighbor_marked_mines = len(
-            [i for i in self.__get_neighbors(r, c) if self.buttons[i].flag == PlayButton.FLAGGED_AS_MINE])
+            [i for i in self.__get_neighbors(r, c) if
+             self.buttons[i].flag == PlayButton.FLAGGED_AS_MINE])
         if number_of_neighbor_marked_mines == self.buttons[(r, c)].value:
             unrevealed_neighbors = [self.buttons[i] for i in self.__get_neighbors(r, c) if
                                     not self.buttons[i].is_revealed]
@@ -167,11 +170,9 @@ class Game(QWidget):
 
     def reveal_neighbor_for_0_field(self, r, c):
         for new_r, new_c in self.__get_neighbors(r, c):
-            if not self.buttons[(new_r, new_c)].is_revealed and self.buttons[(new_r, new_c)].reveal() == 0:
+            if not self.buttons[(new_r, new_c)].is_revealed and \
+                    self.buttons[(new_r, new_c)].reveal() == 0:
                 self.reveal_neighbor_for_0_field(new_r, new_c)
-
-
-
 
 
 class MainWindow(QMainWindow):
@@ -231,7 +232,8 @@ class MainWindow(QMainWindow):
         about_action.triggered.connect(MainWindow.show_about_menu)
 
         def new_game_trigger():
-            [i for i in [beginner_action, advanced_action, expert_action] if i.isChecked()][0].trigger()
+            [i for i in [beginner_action, advanced_action, expert_action] if i.isChecked()][
+                0].trigger()
 
         new_game_action.triggered.connect(new_game_trigger)
 

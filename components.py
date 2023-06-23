@@ -60,7 +60,7 @@ class About(QMessageBox):
         self.setIcon(QMessageBox.Icon.Information)
         self.setText(f"""
         Version: {version}
-        
+
         Source code: https://github.com/Zolikon/minesweeper
         """)
 
