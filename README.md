@@ -1,6 +1,6 @@
 # Minesweeper
 
-[![build](https://github.com/Zolikon/minesweeper/actions/workflows/main.yml/badge.svg)](https://github.com/Zolikon/minesweeper/actions/workflows/main.yml)
+[![build](https://github.com/Zolikon/minesweeper/actions/workflows/main.yml/badge.svg?branch=main)](https://github.com/Zolikon/minesweeper/actions/workflows/main.yml)
 
 ### About the game
 Standard Minesweeper game with full functionality (the way I remembered them)  
