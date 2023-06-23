@@ -1,5 +1,7 @@
 # Minesweeper
 
+[![build](https://github.com/Zolikon/minesweeper/actions/workflows/main.yml/badge.svg)](https://github.com/Zolikon/minesweeper/actions/workflows/main.yml)
+
 ### About the game
 Standard Minesweeper game with full functionality (the way I remembered them)  
 Find the mines with the help of showing the number of neighboring mines.
