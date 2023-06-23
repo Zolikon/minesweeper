@@ -1,16 +1,15 @@
-from PySide6 import QtCore
 from PySide6.QtCore import QSettings
 
-from PySide6.QtGui import QMouseEvent, QFont
+from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QApplication, QMainWindow, QPushButton, QGridLayout, QWidget, QVBoxLayout, \
     QHBoxLayout
 
 import random
 
-from components import MineDisplay, Timer, BestTimes, PlayButton
+from components import MineDisplay, Timer, BestTimes, PlayButton, About
 
 settings = QSettings('minesweeper', 'settings')
-
+version = 1.0
 
 class GameMode:
 
@@ -23,7 +22,7 @@ class GameMode:
 
 BEGINNER = GameMode('beginner', rows=10, cols=10, mines=10)
 ADVANCED = GameMode('advanced', rows=20, cols=20, mines=50)
-EXPERT = GameMode('expert', rows=30, cols=30, mines=150)
+EXPERT = GameMode('expert', rows=16, cols=30, mines=99)
 
 
 
@@ -81,7 +80,7 @@ class Game(QWidget):
             return True
 
         current_mines = 0
-        field = [[0 for r in range(self.rows)] for c in range(self.cols)]
+        field = [[0 for _ in range(self.cols)] for _ in range(self.rows)]
         while current_mines < self.mines:
             if __add_mine(random.randint(0, self.rows - 1), random.randint(0, self.cols - 1)):
                 current_mines += 1
@@ -133,6 +132,8 @@ class Game(QWidget):
 
     def on_game_end(self):
         self.timer.on_game_end()
+        for btn in self.buttons.values():
+            btn.on_game_end()
 
     def on_mine_flagged(self):
         self.mine_display.decrease()
@@ -153,7 +154,6 @@ class Game(QWidget):
             elif not b.is_revealed and b.is_mine():
                 b.set_as_missed_mine()
         self.game_button.setText('😞')
-        self.buttons.clear()
 
     def on_reveal_neighbors_for_revealed(self, r, c):
         number_of_neighbor_marked_mines = len(
@@ -226,6 +226,10 @@ class MainWindow(QMainWindow):
         best_times_reset_action = info_menu.addAction("Reset")
         best_times_reset_action.triggered.connect(MainWindow.reset_best_times)
 
+        about_menu = menu.addMenu("Info")
+        about_action = about_menu.addAction("About")
+        about_action.triggered.connect(MainWindow.show_about_menu)
+
         def new_game_trigger():
             [i for i in [beginner_action, advanced_action, expert_action] if i.isChecked()][0].trigger()
 
@@ -243,6 +247,10 @@ class MainWindow(QMainWindow):
     @staticmethod
     def show_best_times():
         BestTimes().exec()
+
+    @staticmethod
+    def show_about_menu():
+        About(version).exec()
 
     @staticmethod
     def reset_best_times():

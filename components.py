@@ -9,6 +9,7 @@ MINE_ICON = '💣'
 FLAG_ICON = '🚩'
 QUESTION_ICON = '❓'
 
+
 class Timer(QLCDNumber):
 
     def __init__(self):
@@ -51,6 +52,19 @@ class BestTimes(QMessageBox):
         """)
 
 
+class About(QMessageBox):
+
+    def __init__(self, version):
+        super().__init__()
+        self.setWindowTitle("Minesweeper")
+        self.setIcon(QMessageBox.Icon.Information)
+        self.setText(f"""
+        Version: {version}
+        
+        Source code: https://github.com/Zolikon/minesweeper
+        """)
+
+
 class MineDisplay(QLCDNumber):
 
     def __init__(self, mines):
@@ -84,6 +98,7 @@ class PlayButton(QPushButton):
         self.value = value
         self.flag = self.NO_FLAG
         self.is_revealed = False
+        self.is_game_end = False
         self.setFixedSize(25, 25)
 
     def reveal(self):
@@ -96,14 +111,18 @@ class PlayButton(QPushButton):
         self.set_background_color('rgb(25, 191, 180)')
         return self.value
 
+    def on_game_end(self):
+        self.is_game_end = True
+
     def mousePressEvent(self, e: QMouseEvent):
-        if e.button() == QtCore.Qt.MouseButton.RightButton and not self.is_revealed:
-            self.toggle_flag()
-        elif e.button() == QtCore.Qt.MouseButton.LeftButton and self.is_clickable():
-            self.parent().on_reveal(self.row, self.col)
-        elif e.button() == QtCore.Qt.MouseButton.LeftButton and self.is_revealed:
-            self.parent().on_reveal_neighbors_for_revealed(self.row, self.col)
-        self.parent().click_happened_on_field()
+        if not self.is_game_end:
+            if e.button() == QtCore.Qt.MouseButton.RightButton and not self.is_revealed:
+                self.toggle_flag()
+            elif e.button() == QtCore.Qt.MouseButton.LeftButton and self.is_clickable():
+                self.parent().on_reveal(self.row, self.col)
+            elif e.button() == QtCore.Qt.MouseButton.LeftButton and self.is_revealed:
+                self.parent().on_reveal_neighbors_for_revealed(self.row, self.col)
+            self.parent().click_happened_on_field()
 
     def set_as_false_mine(self):
         self.setText('!!!')
