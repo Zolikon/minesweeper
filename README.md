@@ -1,8 +1,5 @@
 # Minesweeper
 
-_Note:_ this project is part fun, part learning python. I made some not-exactly-best-practice choices 
-just to get a better understanding of the language.
-
 ### About the game
 Standard Minesweeper game with full functionality (the way I remembered them)  
 Find the mines with the help of showing the number of neighboring mines.
